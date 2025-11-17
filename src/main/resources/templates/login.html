@@ -12,7 +12,7 @@
 
         <div th:if="${error}" class="error-message" th:text="${error}"></div>
 
-        <form id="loginForm" class="login-form">
+        <form id="loginForm" class="login-form" method="post" action="/login">
             <div class="form-group">
                 <label for="username">Username:</label>
                 <input type="text" id="username" name="username" required>
@@ -34,36 +34,5 @@
     </div>
 
     <script th:src="@{/js/validation.js}"></script>
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ username, password }),
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    // Store the token in a cookie
-                    document.cookie = `token=${data.token}; path=/; max-age=86400`; // 24 hours
-                    // Redirect to dashboard using the current origin
-                    window.location.href = window.location.origin + '/dashboard';
-                } else {
-                    showError(data.message || 'Login failed');
-                }
-            } catch (error) {
-                showError('Network error. Please try again.');
-            }
-        });
-    </script>
 </body>
 </html>

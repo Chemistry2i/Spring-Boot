@@ -151,6 +151,102 @@ public class SchoolController {
         }
     }
 
+    @PostMapping("/validate")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<?> validateSchool(@RequestBody Map<String, Object> schoolData) {
+        try {
+            // Create a School object from the request data
+            School school = new School();
+            school.setName((String) schoolData.get("name"));
+            school.setRegistrationNumber((String) schoolData.get("registrationNumber"));
+            school.setEmail((String) schoolData.get("email"));
+            school.setPhone((String) schoolData.get("phone"));
+            school.setWebsite((String) schoolData.get("website"));
+            school.setDistrict((String) schoolData.get("district"));
+            school.setCounty((String) schoolData.get("county"));
+            school.setParish((String) schoolData.get("parish"));
+            school.setVillage((String) schoolData.get("village"));
+
+            // Set enums if provided
+            if (schoolData.containsKey("region") && schoolData.get("region") != null) {
+                try {
+                    school.setRegion(School.Region.valueOf(schoolData.get("region").toString().toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    // Will be caught by validateSchool method
+                }
+            }
+
+            if (schoolData.containsKey("educationLevel") && schoolData.get("educationLevel") != null) {
+                try {
+                    school.setEducationLevel(School.EducationLevel.valueOf(schoolData.get("educationLevel").toString().toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    // Will be caught by validateSchool method
+                }
+            }
+
+            if (schoolData.containsKey("ownershipType") && schoolData.get("ownershipType") != null) {
+                try {
+                    school.setOwnershipType(School.OwnershipType.valueOf(schoolData.get("ownershipType").toString().toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    // Will be caught by validateSchool method
+                }
+            }
+
+            if (schoolData.containsKey("curriculumType") && schoolData.get("curriculumType") != null) {
+                try {
+                    school.setCurriculum(School.CurriculumType.valueOf(schoolData.get("curriculumType").toString().toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    // Will be caught by validateSchool method
+                }
+            }
+
+            // Set numeric fields if provided
+            if (schoolData.containsKey("studentCapacity") && schoolData.get("studentCapacity") != null) {
+                try {
+                    school.setStudentCapacity(Integer.valueOf(schoolData.get("studentCapacity").toString()));
+                } catch (NumberFormatException e) {
+                    // Will be caught by validateSchool method
+                }
+            }
+
+            if (schoolData.containsKey("currentEnrollment") && schoolData.get("currentEnrollment") != null) {
+                try {
+                    school.setCurrentEnrollment(Integer.valueOf(schoolData.get("currentEnrollment").toString()));
+                } catch (NumberFormatException e) {
+                    // Will be caught by validateSchool method
+                }
+            }
+
+            if (schoolData.containsKey("totalTeachers") && schoolData.get("totalTeachers") != null) {
+                try {
+                    school.setTotalTeachers(Integer.valueOf(schoolData.get("totalTeachers").toString()));
+                } catch (NumberFormatException e) {
+                    // Will be caught by validateSchool method
+                }
+            }
+
+            if (schoolData.containsKey("qualifiedTeachers") && schoolData.get("qualifiedTeachers") != null) {
+                try {
+                    school.setQualifiedTeachers(Integer.valueOf(schoolData.get("qualifiedTeachers").toString()));
+                } catch (NumberFormatException e) {
+                    // Will be caught by validateSchool method
+                }
+            }
+
+            // Use the service method for validation
+            List<String> validationErrors = schoolService.validateSchool(school);
+
+            if (!validationErrors.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("errors", validationErrors));
+            }
+
+            return ResponseEntity.ok(Map.of("message", "School data is valid"));
+
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Validation failed: " + e.getMessage()));
+        }
+    }
+
     // Search and Filter Endpoints
     @GetMapping("/search")
     @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN')")

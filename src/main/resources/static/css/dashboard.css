@@ -165,3 +165,202 @@
 .btn-delete:hover {
     background: #c82333;
 }
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-search {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-search:hover {
+    background: #138496;
+}
+
+.btn-stats {
+    background: #6f42c1;
+    color: white;
+}
+
+.btn-stats:hover {
+    background: #5a359a;
+}
+
+.btn-bulk {
+    background: #fd7e14;
+    color: white;
+}
+
+.btn-bulk:hover {
+    background: #e8680f;
+}
+
+.btn-primary {
+    background: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #545b62;
+}
+
+.btn-warning {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-warning:hover {
+    background: #e0a800;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+/* Search Form */
+.search-form {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+}
+
+.search-form h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.search-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.search-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.search-results {
+    margin-top: 20px;
+    padding: 20px;
+    background: #e9ecef;
+    border-radius: 8px;
+}
+
+.search-results h4 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+/* Statistics Section */
+.statistics-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+}
+
+.statistics-section h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.stats-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stats-details {
+    margin-top: 20px;
+}
+
+.stats-details h4 {
+    margin-bottom: 10px;
+    color: #495057;
+}
+
+.stats-details ul {
+    list-style: none;
+    padding: 0;
+}
+
+.stats-details li {
+    padding: 5px 0;
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Bulk Operations */
+.bulk-operations {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+}
+
+.bulk-operations h3 {
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.bulk-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .search-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .search-actions {
+        flex-direction: column;
+    }
+
+    .bulk-actions {
+        flex-direction: column;
+    }
+}

@@ -79,21 +79,51 @@ function validateLoginForm() {
     return true;
 }
 
-// School form validation
+// School form validation with API validation
 function validateSchoolForm() {
     const name = document.getElementById('name').value.trim();
-    const address = document.getElementById('address').value.trim();
+    const registrationNumber = document.getElementById('registrationNumber').value.trim();
     const email = document.getElementById('email').value.trim();
     const phone = document.getElementById('phone').value.trim();
     const website = document.getElementById('website').value.trim();
+    const district = document.getElementById('district').value.trim();
+    const county = document.getElementById('county').value.trim();
+    const parish = document.getElementById('parish').value.trim();
+    const village = document.getElementById('village').value.trim();
 
+    // Basic validation
     if (!name) {
         showError('School name is required');
         return false;
     }
 
-    if (!address) {
-        showError('Address is required');
+    if (!registrationNumber) {
+        showError('School registration number is required');
+        return false;
+    }
+
+    if (!validateRegistrationNumber(registrationNumber)) {
+        showError('Invalid school registration number format (e.g., UG123456)');
+        return false;
+    }
+
+    if (!district) {
+        showError('District is required');
+        return false;
+    }
+
+    if (!county) {
+        showError('County/Sub-county is required');
+        return false;
+    }
+
+    if (!parish) {
+        showError('Parish is required');
+        return false;
+    }
+
+    if (!village) {
+        showError('Village is required');
         return false;
     }
 
@@ -112,8 +142,8 @@ function validateSchoolForm() {
         return false;
     }
 
-    if (!validatePhone(phone)) {
-        showError('Please enter a valid phone number');
+    if (!validateUgandanPhone(phone)) {
+        showError('Please enter a valid Ugandan phone number (+256XXXXXXXXX)');
         return false;
     }
 
@@ -122,7 +152,81 @@ function validateSchoolForm() {
         return false;
     }
 
-    return true;
+    // API validation
+    validateSchoolWithAPI();
+    return false; // Prevent immediate submission, let API validation handle it
+}
+
+function validateRegistrationNumber(registrationNumber) {
+    const re = /^[A-Z]{2}\d{6}$/;
+    return re.test(registrationNumber);
+}
+
+function validateUgandanPhone(phone) {
+    const re = /^[\+]?256[\d]{9}$/;
+    return re.test(phone.replace(/[\s\-\(\)]/g, ''));
+}
+
+function validateSchoolWithAPI() {
+    const formData = new FormData(document.getElementById('schoolForm'));
+    const schoolData = {};
+
+    for (let [key, value] of formData.entries()) {
+        if (value.trim() !== '') {
+            schoolData[key] = value;
+        }
+    }
+
+    // Convert boolean fields
+    const booleanFields = ['hasLibrary', 'hasLaboratory', 'hasComputerLab', 'hasDormitories', 'hasPlayground', 'hasElectricity', 'hasWaterSupply'];
+    booleanFields.forEach(field => {
+        if (schoolData[field]) {
+            schoolData[field] = schoolData[field] === 'on';
+        }
+    });
+
+    showSuccess('Validating school data...');
+
+    fetch('/api/schools/validate', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + localStorage.getItem('jwtToken')
+        },
+        body: JSON.stringify(schoolData)
+    })
+    .then(response => {
+        if (response.ok) {
+            showSuccess('School data is valid! Submitting form...');
+            // If validation passes, submit the form
+            document.getElementById('schoolForm').submit();
+        } else {
+            return response.json().then(data => {
+                throw new Error(data.message || 'Validation failed');
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Validation error:', error);
+        showError('Validation failed: ' + error.message);
+    });
+}
+
+// Add validation button to school form
+function addValidationButton() {
+    const form = document.getElementById('schoolForm');
+    if (form) {
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) {
+            const validateButton = document.createElement('button');
+            validateButton.type = 'button';
+            validateButton.className = 'btn btn-secondary';
+            validateButton.textContent = 'Validate Data';
+            validateButton.onclick = validateSchoolWithAPI;
+
+            submitButton.parentNode.insertBefore(validateButton, submitButton);
+        }
+    }
 }
 
 // Initialize form validation on page load
@@ -140,9 +244,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // School form
     const schoolForm = document.getElementById('schoolForm');
     if (schoolForm) {
+        // Add validation button
+        addValidationButton();
+
+        // Update form submission to use API validation
         schoolForm.addEventListener('submit', function(e) {
-            if (!validateSchoolForm()) {
-                e.preventDefault();
+            e.preventDefault(); // Always prevent default submission
+            if (validateSchoolForm()) {
+                // This will call the API validation
             }
         });
     }
