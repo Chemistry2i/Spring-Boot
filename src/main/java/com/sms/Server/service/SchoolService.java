@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.ArrayList;
 
 @Service
 @RequiredArgsConstructor
@@ -178,5 +179,100 @@ public class SchoolService {
 
     public List<School> searchSchoolsByLocation(String location) {
         return schoolRepository.findByDistrictContainingIgnoreCaseOrCountyContainingIgnoreCase(location, location);
+    }
+
+    // Advanced search and filter methods
+    public List<School> findSchoolsWithFilters(String name, String registrationNumber, School.Region region,
+                                             String district, School.EducationLevel educationLevel,
+                                             School.OwnershipType ownershipType, School.AccreditationStatus accreditationStatus,
+                                             School.SchoolStatus status) {
+        return schoolRepository.findSchoolsWithFilters(name, registrationNumber, region, district,
+                                                     educationLevel, ownershipType, accreditationStatus, status);
+    }
+
+    // Validation methods
+    public boolean isRegistrationNumberAvailable(String registrationNumber) {
+        return !schoolRepository.existsByRegistrationNumber(registrationNumber);
+    }
+
+    public boolean isEmailAvailable(String email) {
+        return !schoolRepository.existsByEmail(email);
+    }
+
+    public boolean isCapacityValid(Long schoolId, Integer newEnrollment) {
+        Optional<School> school = schoolRepository.findById(schoolId);
+        if (school.isPresent() && school.get().getStudentCapacity() != null) {
+            return newEnrollment <= school.get().getStudentCapacity();
+        }
+        return true; // If no capacity set, allow any enrollment
+    }
+
+    // Statistics methods
+    public long getTotalSchools() {
+        return schoolRepository.count();
+    }
+
+    public long getSchoolsCountByRegion(School.Region region) {
+        return schoolRepository.countByRegion(region);
+    }
+
+    public long getSchoolsCountByEducationLevel(School.EducationLevel educationLevel) {
+        return schoolRepository.countByEducationLevel(educationLevel);
+    }
+
+    public long getSchoolsCountByOwnershipType(School.OwnershipType ownershipType) {
+        return schoolRepository.countByOwnershipType(ownershipType);
+    }
+
+    public long getSchoolsCountByStatus(School.SchoolStatus status) {
+        return schoolRepository.countByStatus(status);
+    }
+
+    public long getSchoolsWithElectricity() {
+        return schoolRepository.countByHasElectricity();
+    }
+
+    public long getSchoolsWithWaterSupply() {
+        return schoolRepository.countByHasWaterSupply();
+    }
+
+    public long getSchoolsWithLibrary() {
+        return schoolRepository.countByHasLibrary();
+    }
+
+    public long getSchoolsWithLaboratory() {
+        return schoolRepository.countByHasLaboratory();
+    }
+
+    public long getSchoolsWithComputerLab() {
+        return schoolRepository.countByHasComputerLab();
+    }
+
+    // Bulk operations
+    public void deleteSchools(List<Long> schoolIds) {
+        for (Long id : schoolIds) {
+            if (schoolRepository.existsById(id)) {
+                schoolRepository.deleteById(id);
+            }
+        }
+    }
+
+    public List<School> updateSchoolsStatus(List<Long> schoolIds, School.SchoolStatus status) {
+        List<School> updatedSchools = new ArrayList<>();
+        for (Long id : schoolIds) {
+            Optional<School> schoolOpt = schoolRepository.findById(id);
+            if (schoolOpt.isPresent()) {
+                School school = schoolOpt.get();
+                school.setStatus(status);
+
+                // Set audit information
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                String currentUser = auth != null ? auth.getName() : "system";
+                school.setUpdatedBy(currentUser);
+
+                updatedSchools.add(schoolRepository.save(school));
+            }
+        }
+        return updatedSchools;
     }
 }
