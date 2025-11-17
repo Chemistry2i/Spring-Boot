@@ -42,9 +42,21 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
             .authorizeRequests()
                 .antMatchers("/api/auth/**").permitAll()
                 .antMatchers("/h2-console/**").permitAll()
+                .antMatchers("/", "/login", "/css/**", "/js/**", "/images/**").permitAll()
+                .antMatchers("/dashboard", "/schools/**").authenticated()
                 .antMatchers("/admin/**").hasRole("ADMIN")
                 .antMatchers("/superadmin/**").hasRole("SUPERADMIN")
-                .anyRequest().authenticated();
+                .anyRequest().authenticated()
+            .and()
+            .formLogin()
+                .loginPage("/login")
+                .defaultSuccessUrl("/dashboard", true)
+                .failureUrl("/login?error=true")
+                .permitAll()
+            .and()
+            .logout()
+                .logoutSuccessUrl("/login")
+                .permitAll();
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

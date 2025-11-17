@@ -29,6 +29,13 @@ public class SchoolService {
         return schoolRepository.save(school);
     }
 
+    public School createSchool(School school) {
+        if (schoolRepository.existsByEmail(school.getEmail())) {
+            throw new RuntimeException("School with this email already exists");
+        }
+        return schoolRepository.save(school);
+    }
+
     public List<School> getAllSchools() {
         return schoolRepository.findAll();
     }
