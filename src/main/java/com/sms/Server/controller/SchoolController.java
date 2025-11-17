@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/schools")
@@ -146,6 +147,170 @@ public class SchoolController {
             schoolService.deleteSchool(id);
             return ResponseEntity.ok(Map.of("message", "School deleted successfully"));
         } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    // Search and Filter Endpoints
+    @GetMapping("/search")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<List<School>> searchSchools(@RequestParam(required = false) String keyword) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return ResponseEntity.ok(schoolService.searchSchools(keyword.trim()));
+        }
+        return ResponseEntity.ok(schoolService.getAllSchools());
+    }
+
+    @GetMapping("/filter")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<List<School>> filterSchools(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String registrationNumber,
+            @RequestParam(required = false) String region,
+            @RequestParam(required = false) String district,
+            @RequestParam(required = false) String educationLevel,
+            @RequestParam(required = false) String ownershipType,
+            @RequestParam(required = false) String accreditationStatus,
+            @RequestParam(required = false) String status) {
+
+        School.Region regionEnum = region != null ? School.Region.valueOf(region.toUpperCase()) : null;
+        School.EducationLevel educationLevelEnum = educationLevel != null ? School.EducationLevel.valueOf(educationLevel.toUpperCase()) : null;
+        School.OwnershipType ownershipTypeEnum = ownershipType != null ? School.OwnershipType.valueOf(ownershipType.toUpperCase()) : null;
+        School.AccreditationStatus accreditationStatusEnum = accreditationStatus != null ? School.AccreditationStatus.valueOf(accreditationStatus.toUpperCase()) : null;
+        School.SchoolStatus statusEnum = status != null ? School.SchoolStatus.valueOf(status.toUpperCase()) : null;
+
+        List<School> schools = schoolService.findSchoolsWithFilters(name, registrationNumber, regionEnum,
+                                                                  district, educationLevelEnum, ownershipTypeEnum,
+                                                                  accreditationStatusEnum, statusEnum);
+        return ResponseEntity.ok(schools);
+    }
+
+    @GetMapping("/by-region/{region}")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<List<School>> getSchoolsByRegion(@PathVariable String region) {
+        try {
+            School.Region regionEnum = School.Region.valueOf(region.toUpperCase());
+            return ResponseEntity.ok(schoolService.getSchoolsByRegion(regionEnum));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(List.of());
+        }
+    }
+
+    @GetMapping("/by-district/{district}")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<List<School>> getSchoolsByDistrict(@PathVariable String district) {
+        return ResponseEntity.ok(schoolService.getSchoolsByDistrict(district));
+    }
+
+    // Validation Endpoints
+    @GetMapping("/validate-registration")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Boolean>> validateRegistrationNumber(@RequestParam String number) {
+        boolean available = schoolService.isRegistrationNumberAvailable(number);
+        return ResponseEntity.ok(Map.of("available", available));
+    }
+
+    @GetMapping("/validate-email")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Boolean>> validateEmail(@RequestParam String email) {
+        boolean available = schoolService.isEmailAvailable(email);
+        return ResponseEntity.ok(Map.of("available", available));
+    }
+
+    @GetMapping("/validate-capacity")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Boolean>> validateCapacity(@RequestParam Long schoolId, @RequestParam Integer enrollment) {
+        boolean valid = schoolService.isCapacityValid(schoolId, enrollment);
+        return ResponseEntity.ok(Map.of("valid", valid));
+    }
+
+    // Statistics Endpoints
+    @GetMapping("/stats/overview")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Object>> getSchoolStats() {
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("totalSchools", schoolService.getTotalSchools());
+        stats.put("activeSchools", schoolService.getSchoolsByStatus(School.SchoolStatus.ACTIVE));
+        stats.put("inactiveSchools", schoolService.getSchoolsByStatus(School.SchoolStatus.INACTIVE));
+
+        // Regional stats
+        Map<String, Long> regionalStats = new HashMap<>();
+        for (School.Region region : School.Region.values()) {
+            regionalStats.put(region.name().toLowerCase(), schoolService.getSchoolsCountByRegion(region));
+        }
+        stats.put("byRegion", regionalStats);
+
+        // Education level stats
+        Map<String, Long> educationStats = new HashMap<>();
+        for (School.EducationLevel level : School.EducationLevel.values()) {
+            educationStats.put(level.name().toLowerCase(), schoolService.getSchoolsCountByEducationLevel(level));
+        }
+        stats.put("byEducationLevel", educationStats);
+
+        // Ownership stats
+        Map<String, Long> ownershipStats = new HashMap<>();
+        for (School.OwnershipType type : School.OwnershipType.values()) {
+            ownershipStats.put(type.name().toLowerCase(), schoolService.getSchoolsCountByOwnershipType(type));
+        }
+        stats.put("byOwnershipType", ownershipStats);
+
+        return ResponseEntity.ok(stats);
+    }
+
+    @GetMapping("/stats/facilities")
+    @PreAuthorize("hasRole('SUPERADMIN') or hasRole('ADMIN')")
+    public ResponseEntity<Map<String, Long>> getFacilitiesStats() {
+        Map<String, Long> facilitiesStats = new HashMap<>();
+        facilitiesStats.put("withElectricity", schoolService.getSchoolsWithElectricity());
+        facilitiesStats.put("withWaterSupply", schoolService.getSchoolsWithWaterSupply());
+        facilitiesStats.put("withLibrary", schoolService.getSchoolsWithLibrary());
+        facilitiesStats.put("withLaboratory", schoolService.getSchoolsWithLaboratory());
+        facilitiesStats.put("withComputerLab", schoolService.getSchoolsWithComputerLab());
+
+        return ResponseEntity.ok(facilitiesStats);
+    }
+
+    // Bulk Operations Endpoints
+    @PostMapping("/bulk-delete")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public ResponseEntity<?> bulkDeleteSchools(@RequestBody Map<String, List<Long>> request) {
+        try {
+            List<Long> schoolIds = request.get("schoolIds");
+            if (schoolIds == null || schoolIds.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "No school IDs provided"));
+            }
+
+            schoolService.deleteSchools(schoolIds);
+            return ResponseEntity.ok(Map.of("message", "Successfully deleted " + schoolIds.size() + " schools"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/bulk-update-status")
+    @PreAuthorize("hasRole('SUPERADMIN')")
+    public ResponseEntity<?> bulkUpdateStatus(@RequestBody Map<String, Object> request) {
+        try {
+            @SuppressWarnings("unchecked")
+            List<Long> schoolIds = (List<Long>) request.get("schoolIds");
+            String statusStr = (String) request.get("status");
+
+            if (schoolIds == null || schoolIds.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "No school IDs provided"));
+            }
+
+            if (statusStr == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "No status provided"));
+            }
+
+            School.SchoolStatus status = School.SchoolStatus.valueOf(statusStr.toUpperCase());
+            List<School> updatedSchools = schoolService.updateSchoolsStatus(schoolIds, status);
+
+            return ResponseEntity.ok(Map.of("message", "Successfully updated " + updatedSchools.size() + " schools",
+                                          "updatedSchools", updatedSchools));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid status value"));
+        } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
