@@ -13,35 +13,311 @@
         <div th:if="${error}" class="error-message" th:text="${error}"></div>
         <div th:if="${success}" class="success-message" th:text="${success}"></div>
 
-        <form th:action="${school != null} ? @{/schools/{id}(id=${school.id})} : @{/schools}" method="post" id="schoolForm">
-            <div class="form-group">
-                <label for="name">School Name *</label>
-                <input type="text" id="name" name="name" th:value="${school?.name}" required
-                       placeholder="Enter the full name of the school">
+        <form th:action="${school != null} ? '/schools/' + ${school.id} : '/schools'" method="post" id="schoolForm">
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h3>Basic Information</h3>
+                <div class="form-group">
+                    <label for="name">School Name *</label>
+                    <input type="text" id="name" name="name" th:value="${school?.name}" required
+                           placeholder="Enter the full name of the school">
+                </div>
+
+                <div class="form-group">
+                    <label for="registrationNumber">School Registration Number *</label>
+                    <input type="text" id="registrationNumber" name="registrationNumber"
+                           th:value="${school?.registrationNumber}" required
+                           placeholder="UG123456" pattern="[A-Z]{2}\d{6}">
+                    <small class="form-hint">Format: UG followed by 6 digits (e.g., UG123456)</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="educationLevel">Education Level *</label>
+                        <select id="educationLevel" name="educationLevel" required>
+                            <option value="PRE_PRIMARY" th:selected="${school?.educationLevel?.name() == 'PRE_PRIMARY'}">Pre-Primary</option>
+                            <option value="PRIMARY" th:selected="${school?.educationLevel?.name() == 'PRIMARY'}">Primary</option>
+                            <option value="SECONDARY" th:selected="${school?.educationLevel?.name() == 'SECONDARY'}">Secondary (O-Level &amp; A-Level)</option>
+                            <option value="VOCATIONAL" th:selected="${school?.educationLevel?.name() == 'VOCATIONAL'}">Vocational</option>
+                            <option value="TERTIARY" th:selected="${school?.educationLevel?.name() == 'TERTIARY'}">Tertiary</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ownershipType">Ownership Type *</label>
+                        <select id="ownershipType" name="ownershipType" required>
+                            <option value="GOVERNMENT" th:selected="${school?.ownershipType?.name() == 'GOVERNMENT'}">Government</option>
+                            <option value="PRIVATE" th:selected="${school?.ownershipType?.name() == 'PRIVATE'}">Private</option>
+                            <option value="COMMUNITY" th:selected="${school?.ownershipType?.name() == 'COMMUNITY'}">Community</option>
+                            <option value="RELIGIOUS" th:selected="${school?.ownershipType?.name() == 'RELIGIOUS'}">Religious</option>
+                            <option value="NGO" th:selected="${school?.ownershipType?.name() == 'NGO'}">NGO</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="category">School Category *</label>
+                        <select id="category" name="category" required>
+                            <option value="A" th:selected="${school?.category?.name() == 'A'}">Category A (Elite)</option>
+                            <option value="B" th:selected="${school?.category?.name() == 'B'}">Category B</option>
+                            <option value="C" th:selected="${school?.category?.name() == 'C'}">Category C</option>
+                            <option value="D" th:selected="${school?.category?.name() == 'D'}">Category D</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="status">Status *</label>
+                        <select id="status" name="status" required>
+                            <option value="ACTIVE" th:selected="${school?.status?.name() == 'ACTIVE'}">Active</option>
+                            <option value="INACTIVE" th:selected="${school?.status?.name() == 'INACTIVE'}">Inactive</option>
+                            <option value="CLOSED" th:selected="${school?.status?.name() == 'CLOSED'}">Closed</option>
+                            <option value="UNDER_REVIEW" th:selected="${school?.status?.name() == 'UNDER_REVIEW'}">Under Review</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="boardingType">Boarding Type *</label>
+                        <select id="boardingType" name="boardingType" required>
+                            <option value="DAY" th:selected="${school?.boardingType?.name() == 'DAY'}">Day School</option>
+                            <option value="BOARDING" th:selected="${school?.boardingType?.name() == 'BOARDING'}">Boarding School</option>
+                            <option value="DAY_AND_BOARDING" th:selected="${school?.boardingType?.name() == 'DAY_AND_BOARDING'}">Day &amp; Boarding</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="genderType">Gender Type *</label>
+                        <select id="genderType" name="genderType" required>
+                            <option value="MIXED" th:selected="${school?.genderType?.name() == 'MIXED'}">Mixed</option>
+                            <option value="BOYS_ONLY" th:selected="${school?.genderType?.name() == 'BOYS_ONLY'}">Boys Only</option>
+                            <option value="GIRLS_ONLY" th:selected="${school?.genderType?.name() == 'GIRLS_ONLY'}">Girls Only</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="3"
+                              placeholder="Brief description of the school" th:text="${school?.description}"></textarea>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="address">Address *</label>
-                <input type="text" id="address" name="address" th:value="${school?.address}" required
-                       placeholder="Enter the complete address">
+            <!-- Location Information -->
+            <div class="form-section">
+                <h3>Location Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="region">Region *</label>
+                        <select id="region" name="region" required>
+                            <option value="CENTRAL" th:selected="${school?.region?.name() == 'CENTRAL'}">Central Region</option>
+                            <option value="EASTERN" th:selected="${school?.region?.name() == 'EASTERN'}">Eastern Region</option>
+                            <option value="NORTHERN" th:selected="${school?.region?.name() == 'NORTHERN'}">Northern Region</option>
+                            <option value="WESTERN" th:selected="${school?.region?.name() == 'WESTERN'}">Western Region</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="district">District *</label>
+                        <input type="text" id="district" name="district" th:value="${school?.district}" required
+                               placeholder="e.g., Kampala, Wakiso, Mukono">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="county">County/Sub-county *</label>
+                        <input type="text" id="county" name="county" th:value="${school?.county}" required
+                               placeholder="County or Sub-county name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="parish">Parish *</label>
+                        <input type="text" id="parish" name="parish" th:value="${school?.parish}" required
+                               placeholder="Parish name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="village">Village *</label>
+                        <input type="text" id="village" name="village" th:value="${school?.village}" required
+                               placeholder="Village name">
+                    </div>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="email">Email Address *</label>
-                <input type="email" id="email" name="email" th:value="${school?.email}" required
-                       placeholder="school@example.com">
+            <!-- Contact Information -->
+            <div class="form-section">
+                <h3>Contact Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" th:value="${school?.email}" required
+                               placeholder="school@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">Phone Number *</label>
+                        <input type="tel" id="phone" name="phone" th:value="${school?.phone}" required
+                               placeholder="+256701234567" pattern="\+256\d{9}">
+                        <small class="form-hint">Format: +256XXXXXXXXX</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="website">Website (Optional)</label>
+                    <input type="url" id="website" name="website" th:value="${school?.website}"
+                           placeholder="https://www.schoolwebsite.com">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="phone">Phone Number *</label>
-                <input type="tel" id="phone" name="phone" th:value="${school?.phone}" required
-                       placeholder="+1-234-567-8900">
+            <!-- Academic Information -->
+            <div class="form-section">
+                <h3>Academic Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="curriculum">Curriculum *</label>
+                        <select id="curriculum" name="curriculum" required>
+                            <option value="CBC" th:selected="${school?.curriculum?.name() == 'CBC'}">Competency Based Curriculum (CBC)</option>
+                            <option value="UCE" th:selected="${school?.curriculum?.name() == 'UCE'}">Uganda Certificate of Education (UCE)</option>
+                            <option value="UACE" th:selected="${school?.curriculum?.name() == 'UACE'}">Uganda Advanced Certificate of Education (UACE)</option>
+                            <option value="VOCATIONAL" th:selected="${school?.curriculum?.name() == 'VOCATIONAL'}">Vocational Training</option>
+                            <option value="SPECIAL_NEEDS" th:selected="${school?.curriculum?.name() == 'SPECIAL_NEEDS'}">Special Needs Education</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="languageOfInstruction">Language of Instruction *</label>
+                        <select id="languageOfInstruction" name="languageOfInstruction" required>
+                            <option value="ENGLISH" th:selected="${school?.languageOfInstruction?.name() == 'ENGLISH'}">English</option>
+                            <option value="LUGANDA" th:selected="${school?.languageOfInstruction?.name() == 'LUGANDA'}">Luganda</option>
+                            <option value="RUNYAKITARA" th:selected="${school?.languageOfInstruction?.name() == 'RUNYAKITARA'}">Runyakitara</option>
+                            <option value="LUSOGA" th:selected="${school?.languageOfInstruction?.name() == 'LUSOGA'}">Lusoga</option>
+                            <option value="LUMASABA" th:selected="${school?.languageOfInstruction?.name() == 'LUMASABA'}">Lumasaba</option>
+                            <option value="OTHER" th:selected="${school?.languageOfInstruction?.name() == 'OTHER'}">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="studentCapacity">Student Capacity</label>
+                        <input type="number" id="studentCapacity" name="studentCapacity"
+                               th:value="${school?.studentCapacity}" min="1" max="10000"
+                               placeholder="Maximum number of students">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="currentEnrollment">Current Enrollment</label>
+                        <input type="number" id="currentEnrollment" name="currentEnrollment"
+                               th:value="${school?.currentEnrollment}" min="0"
+                               placeholder="Current number of students">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="examinationCenterNumber">UNEB Examination Center Number</label>
+                    <input type="text" id="examinationCenterNumber" name="examinationCenterNumber"
+                           th:value="${school?.examinationCenterNumber}"
+                           placeholder="UNEB center number for examinations">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="website">Website (Optional)</label>
-                <input type="url" id="website" name="website" th:value="${school?.website}"
-                       placeholder="https://www.schoolwebsite.com">
+            <!-- Staff Information -->
+            <div class="form-section">
+                <h3>Staff Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="totalTeachers">Total Teachers</label>
+                        <input type="number" id="totalTeachers" name="totalTeachers"
+                               th:value="${school?.totalTeachers}" min="0"
+                               placeholder="Total number of teachers">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="qualifiedTeachers">Qualified Teachers</label>
+                        <input type="number" id="qualifiedTeachers" name="qualifiedTeachers"
+                               th:value="${school?.qualifiedTeachers}" min="0"
+                               placeholder="Number of qualified teachers">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Facilities -->
+            <div class="form-section">
+                <h3>Facilities &amp; Infrastructure</h3>
+                <div class="facilities-grid">
+                    <div class="facility-item">
+                        <input type="checkbox" id="hasLibrary" name="hasLibrary" th:checked="${school?.hasLibrary}">
+                        <label for="hasLibrary">Library</label>
+                    </div>
+                    <div class="facility-item">
+                        <input type="checkbox" id="hasLaboratory" name="hasLaboratory" th:checked="${school?.hasLaboratory}">
+                        <label for="hasLaboratory">Science Laboratory</label>
+                    </div>
+                    <div class="facility-item">
+                        <input type="checkbox" id="hasComputerLab" name="hasComputerLab" th:checked="${school?.hasComputerLab}">
+                        <label for="hasComputerLab">Computer Laboratory</label>
+                    </div>
+                    <div class="facility-item">
+                        <input type="checkbox" id="hasDormitories" name="hasDormitories" th:checked="${school?.hasDormitories}">
+                        <label for="hasDormitories">Dormitories</label>
+                    </div>
+                    <div class="facility-item">
+                        <input type="checkbox" id="hasPlayground" name="hasPlayground" th:checked="${school?.hasPlayground}">
+                        <label for="hasPlayground">Playground/Sports Facilities</label>
+                    </div>
+                    <div class="facility-item">
+                        <input type="checkbox" id="hasElectricity" name="hasElectricity" th:checked="${school?.hasElectricity}">
+                        <label for="hasElectricity">Electricity</label>
+                    </div>
+                    <div class="facility-item">
+                        <input type="checkbox" id="hasWaterSupply" name="hasWaterSupply" th:checked="${school?.hasWaterSupply}">
+                        <label for="hasWaterSupply">Clean Water Supply</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Administration -->
+            <div class="form-section">
+                <h3>Administration</h3>
+                <div class="form-group">
+                    <label for="headteacherName">Headteacher Name</label>
+                    <input type="text" id="headteacherName" name="headteacherName" th:value="${school?.headteacherName}"
+                           placeholder="Full name of the headteacher">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="headteacherEmail">Headteacher Email</label>
+                        <input type="email" id="headteacherEmail" name="headteacherEmail" th:value="${school?.headteacherEmail}"
+                               placeholder="headteacher@school.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="headteacherPhone">Headteacher Phone</label>
+                        <input type="tel" id="headteacherPhone" name="headteacherPhone" th:value="${school?.headteacherPhone}"
+                               placeholder="+256701234567" pattern="\+256\d{9}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="foundingYear">Founding Year</label>
+                        <input type="number" id="foundingYear" name="foundingYear"
+                               th:value="${school?.foundingYear}" min="1900" max="2025"
+                               placeholder="Year school was founded">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="accreditationStatus">Accreditation Status *</label>
+                        <select id="accreditationStatus" name="accreditationStatus" required>
+                            <option value="RECOGNIZED" th:selected="${school?.accreditationStatus?.name() == 'RECOGNIZED'}">Recognized by MoES</option>
+                            <option value="PROVISIONAL" th:selected="${school?.accreditationStatus?.name() == 'PROVISIONAL'}">Provisional Accreditation</option>
+                            <option value="NOT_RECOGNIZED" th:selected="${school?.accreditationStatus?.name() == 'NOT_RECOGNIZED'}">Not Recognized</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div class="btn-container">
