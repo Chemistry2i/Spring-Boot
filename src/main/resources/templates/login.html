@@ -55,8 +55,8 @@
                 if (response.ok) {
                     // Store the token in a cookie
                     document.cookie = `token=${data.token}; path=/; max-age=86400`; // 24 hours
-                    // Redirect to dashboard
-                    window.location.href = '/dashboard';
+                    // Redirect to dashboard using the current origin
+                    window.location.href = window.location.origin + '/dashboard';
                 } else {
                     showError(data.message || 'Login failed');
                 }
