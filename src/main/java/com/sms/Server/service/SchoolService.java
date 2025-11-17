@@ -199,12 +199,85 @@ public class SchoolService {
         return !schoolRepository.existsByEmail(email);
     }
 
+    public boolean existsByRegistrationNumber(String registrationNumber) {
+        return schoolRepository.existsByRegistrationNumber(registrationNumber);
+    }
+
+    public boolean existsByEmail(String email) {
+        return schoolRepository.existsByEmail(email);
+    }
+
     public boolean isCapacityValid(Long schoolId, Integer newEnrollment) {
         Optional<School> school = schoolRepository.findById(schoolId);
         if (school.isPresent() && school.get().getStudentCapacity() != null) {
             return newEnrollment <= school.get().getStudentCapacity();
         }
         return true; // If no capacity set, allow any enrollment
+    }
+
+    public List<String> validateSchool(School school) {
+        List<String> errors = new ArrayList<>();
+
+        // Validate required fields
+        if (school.getName() == null || school.getName().trim().isEmpty()) {
+            errors.add("School name is required");
+        }
+
+        if (school.getRegistrationNumber() == null || school.getRegistrationNumber().trim().isEmpty()) {
+            errors.add("Registration number is required");
+        } else if (!isRegistrationNumberAvailable(school.getRegistrationNumber())) {
+            errors.add("Registration number already exists");
+        }
+
+        if (school.getEmail() == null || school.getEmail().trim().isEmpty()) {
+            errors.add("Email is required");
+        } else if (!isEmailAvailable(school.getEmail())) {
+            errors.add("Email already exists");
+        }
+
+        if (school.getEducationLevel() == null) {
+            errors.add("Education level is required");
+        }
+
+        if (school.getOwnershipType() == null) {
+            errors.add("Ownership type is required");
+        }
+
+        if (school.getRegion() == null) {
+            errors.add("Region is required");
+        }
+
+        if (school.getDistrict() == null || school.getDistrict().trim().isEmpty()) {
+            errors.add("District is required");
+        }
+
+        // Validate enrollment vs capacity
+        if (school.getCurrentEnrollment() != null && school.getStudentCapacity() != null) {
+            if (school.getCurrentEnrollment() > school.getStudentCapacity()) {
+                errors.add("Current enrollment cannot exceed student capacity");
+            }
+        }
+
+        // Validate qualified teachers vs total teachers
+        if (school.getQualifiedTeachers() != null && school.getTotalTeachers() != null) {
+            if (school.getQualifiedTeachers() > school.getTotalTeachers()) {
+                errors.add("Qualified teachers cannot exceed total teachers");
+            }
+        }
+
+        // Validate email format (basic check)
+        if (school.getEmail() != null && !school.getEmail().matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+            errors.add("Invalid email format");
+        }
+
+        // Validate phone format (basic check for Ugandan numbers)
+        if (school.getPhone() != null && !school.getPhone().trim().isEmpty()) {
+            if (!school.getPhone().matches("^(\\+256|0)[0-9]{8,9}$")) {
+                errors.add("Invalid phone number format. Use +256XXXXXXXXX or 0XXXXXXXXX");
+            }
+        }
+
+        return errors;
     }
 
     // Statistics methods
