@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .error { color: red; }
+        .success { color: green; }
+        li { margin-bottom: 8px; }
+        input { margin-right: 4px; }
+        .section { margin-bottom: 40px; }
+    </style>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    <div class="section">
+        <h2>Connection Test</h2>
+        <button onclick="testConnection()">Test Backend Connection</button>
+    </div>
+    <div class="section">
+        <h2>Course Management</h2>
+        <input id="courseName" placeholder="Course Name" maxlength="100">
+        <input id="courseDescription" placeholder="Description" maxlength="255">
+        <button onclick="createCourse()">Create</button>
+        <button onclick="getAllCourses()">Refresh</button>
+        <ul id="courseList"></ul>
+    </div>
+    <div class="section">
+        <h2>Classroom Management</h2>
+        <input id="classroomName" placeholder="Classroom Name" maxlength="100">
+        <button onclick="createClassroom()">Create</button>
+        <button onclick="getAllClassrooms()">Refresh</button>
+        <ul id="classroomList"></ul>
+    </div>
+    <div id="feedback"></div>
+    <script>
+        // --- Utility ---
+        function escapeHtml(text) {
+            return text.replace(/[&<>"']/g, function(m) {
+                return ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                })[m];
+            });
+        }
+        function showFeedback(msg, success) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = msg;
+            feedback.className = success ? 'success' : 'error';
+            setTimeout(() => { feedback.textContent = ''; }, 4000);
+        }
+
+        // --- Connection Test ---
+        function testConnection() {
+            fetch('/api/courses')
+                .then(res => {
+                    if (res.ok) {
+                        showFeedback('Backend connected successfully!', true);
+                    } else {
+                        throw new Error('Backend responded with error');
+                    }
+                })
+                .catch(err => showFeedback('Connection failed: ' + err.message, false));
+        }
+
+        // --- Course Management ---
+        function createCourse() {
+            const name = document.getElementById('courseName').value.trim();
+            const description = document.getElementById('courseDescription').value.trim();
+            if (!name) {
+                showFeedback('Course name is required.', false);
+                return;
+            }
+            fetch('/api/courses', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: name, description: description})
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(err => { throw err; });
+                return res.json();
+            })
+            .then(data => {
+                showFeedback('Created: ' + JSON.stringify(data), true);
+                document.getElementById('courseName').value = '';
+                document.getElementById('courseDescription').value = '';
+                getAllCourses();
+            })
+            .catch(err => showFeedback('Error creating course: ' + (err.message || JSON.stringify(err)), false));
+        }
+
+        function getAllCourses() {
+            fetch('/api/courses')
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById('courseList');
+                    list.innerHTML = '';
+                    data.forEach(c => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <b>ID:</b> ${c.id}, 
+                            <b>Name:</b> <span id="name-course-${c.id}">${escapeHtml(c.name)}</span>
+                            <b>Description:</b> <span id="desc-course-${c.id}">${escapeHtml(c.description || '')}</span>
+                            <button onclick="showUpdateCourseForm(${c.id}, '${escapeHtml(c.name)}', '${escapeHtml(c.description || '')}')">Edit</button>
+                            <button onclick="deleteCourse(${c.id})">Delete</button>
+                        `;
+                        list.appendChild(li);
+                    });
+                })
+                .catch(() => showFeedback('Error loading courses', false));
+        }
+
+        function showUpdateCourseForm(id, name, description) {
+            const li = document.getElementById(`name-course-${id}`).parentElement;
+            li.innerHTML = `
+                <b>ID:</b> ${id},
+                <input id="editName-course-${id}" value="${name}" maxlength="100" placeholder="Course Name">
+                <input id="editDesc-course-${id}" value="${description}" maxlength="255" placeholder="Description">
+                <button onclick="updateCourse(${id})">Save</button>
+                <button onclick="getAllCourses()">Cancel</button>
+            `;
+        }
+
+        function updateCourse(id) {
+            const name = document.getElementById(`editName-course-${id}`).value.trim();
+            const description = document.getElementById(`editDesc-course-${id}`).value.trim();
+            if (!name) {
+                showFeedback('Course name is required.', false);
+                return;
+            }
+            fetch('/api/courses/' + id, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id, name: name, description: description})
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(err => { throw err; });
+                return res.json();
+            })
+            .then(data => {
+                showFeedback('Updated: ' + JSON.stringify(data), true);
+                getAllCourses();
+            })
+            .catch(err => showFeedback('Error updating course: ' + (err.message || JSON.stringify(err)), false));
+        }
+
+        function deleteCourse(id) {
+            if (!confirm('Are you sure you want to delete this course?')) return;
+            fetch('/api/courses/' + id, { method: 'DELETE' })
+            .then(res => {
+                if (!res.ok) throw new Error('Delete failed');
+                showFeedback('Deleted course ' + id, true);
+                getAllCourses();
+            })
+            .catch(err => showFeedback('Error deleting course', false));
+        }
+
+        // --- Classroom Management ---
+        function createClassroom() {
+            const name = document.getElementById('classroomName').value.trim();
+            if (!name) {
+                showFeedback('Classroom name is required.', false);
+                return;
+            }
+            fetch('/api/classrooms', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: name})
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(err => { throw err; });
+                return res.json();
+            })
+            .then(data => {
+                showFeedback('Created: ' + JSON.stringify(data), true);
+                document.getElementById('classroomName').value = '';
+                getAllClassrooms();
+            })
+            .catch(err => showFeedback('Error: ' + (err.message || JSON.stringify(err)), false));
+        }
+
+        function getAllClassrooms() {
+            fetch('/api/classrooms')
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById('classroomList');
+                    list.innerHTML = '';
+                    data.forEach(c => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <b>ID:</b> ${c.id}, <b>Name:</b> <span id="name-classroom-${c.id}">${escapeHtml(c.name)}</span>
+                            <b>Schedule:</b> <span id="schedule-classroom-${c.id}">${escapeHtml(c.schedule || '')}</span>
+                            <button onclick="showUpdateClassroomForm(${c.id}, '${escapeHtml(c.name)}', '${escapeHtml(c.schedule || '')}')">Edit</button>
+                            <button onclick="deleteClassroom(${c.id})">Delete</button>
+                        `;
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+        function showUpdateClassroomForm(id, name, schedule) {
+            const li = document.getElementById(`name-classroom-${id}`).parentElement;
+            li.innerHTML = `
+                <b>ID:</b> ${id},
+                <input id="editName-classroom-${id}" value="${name}" maxlength="100" placeholder="Classroom Name">
+                <input id="editSchedule-classroom-${id}" value="${schedule}" maxlength="100" placeholder="Schedule">
+                <button onclick="updateClassroom(${id})">Save</button>
+                <button onclick="getAllClassrooms()">Cancel</button>
+            `;
+        }
+
+        function updateClassroom(id) {
+            const name = document.getElementById(`editName-classroom-${id}`).value.trim();
+            const schedule = document.getElementById(`editSchedule-classroom-${id}`).value.trim();
+            if (!name) {
+                showFeedback('Classroom name is required.', false);
+                return;
+            }
+            fetch('/api/classrooms/' + id, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id, name: name, schedule: schedule})
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(err => { throw err; });
+                return res.json();
+            })
+            .then(data => {
+                showFeedback('Updated: ' + JSON.stringify(data), true);
+                getAllClassrooms();
+            })
+            .catch(err => showFeedback('Error: ' + (err.message || JSON.stringify(err)), false));
+        }
+
+        function deleteClassroom(id) {
+            if (!confirm('Are you sure you want to delete this classroom?')) return;
+            fetch('/api/classrooms/' + id, { method: 'DELETE' })
+            .then(res => {
+                if (!res.ok) throw new Error('Delete failed');
+                showFeedback('Deleted classroom ' + id, true);
+                getAllClassrooms();
+            })
+            .catch(err => showFeedback('Error deleting classroom', false));
+        }
+
+        // --- Initial load ---
+        getAllCourses();
+        getAllClassrooms();
+    </script>
+</body>
+</html>
