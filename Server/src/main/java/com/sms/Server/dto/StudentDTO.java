@@ -1,64 +1,40 @@
-package com.sms.Server.entity;
+package com.sms.Server.dto;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Past;
-import javax.validation.constraints.Pattern;
+import com.sms.Server.entity.Gender;
+import com.sms.Server.entity.Relationship;
+import com.sms.Server.entity.StudentCategory;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
-@Entity
-@Table(name = "students")
-public class Student extends User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class StudentDTO {
     private Long id;
-
-    @Column(unique = true)
-    @NotBlank
-    private String studentId; // e.g., S1/2025/015
-
-    @Enumerated(EnumType.STRING)
+    private String studentId;
+    private String firstName;
+    private String lastName;
     private Gender gender;
-
-    @Past
     private LocalDate dateOfBirth;
     private String nationalId;
     private String religion;
     private String disability;
-
-    // Contact
     private String homeAddress;
     private String district;
     private String county;
     private String parish;
-
-    // Parent
     private String parentName;
-    @Enumerated(EnumType.STRING)
     private Relationship parentRelationship;
     private String parentContact;
     private String parentOccupation;
     private String parentAddress;
-
-    // Academic
     private LocalDate admissionDate;
-    private String className; // e.g., S1
-    private String stream; // e.g., East
-    @Enumerated(EnumType.STRING)
+    private String className;
+    private String stream;
     private StudentCategory category;
     private String previousSchool;
     private String house;
-
-    // Attachments
-    private String passportPhoto; // File path
-    private String birthCertificate; // File path
-
+    private String passportPhoto;
+    private String birthCertificate;
     private LocalDateTime createdAt;
-
-    @OneToMany(mappedBy = "child", cascade = CascadeType.ALL)
-    private List<Parent> parents;
 
     // Getters and setters
     public Long getId() { return id; }
@@ -66,6 +42,12 @@ public class Student extends User {
 
     public String getStudentId() { return studentId; }
     public void setStudentId(String studentId) { this.studentId = studentId; }
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
 
     public Gender getGender() { return gender; }
     public void setGender(Gender gender) { this.gender = gender; }
@@ -128,14 +110,11 @@ public class Student extends User {
     public void setHouse(String house) { this.house = house; }
 
     public String getPassportPhoto() { return passportPhoto; }
-    public void setPassportPhoto(String passportPhoto) { this.passportPhoto = passportPhoto; }
+    public void setPassportPhoto(String passportPhoto) { this.passportPhoto = this.passportPhoto; }
 
     public String getBirthCertificate() { return birthCertificate; }
     public void setBirthCertificate(String birthCertificate) { this.birthCertificate = birthCertificate; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-
-    public List<Parent> getParents() { return parents; }
-    public void setParents(List<Parent> parents) { this.parents = parents; }
 }

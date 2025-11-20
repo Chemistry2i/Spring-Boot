@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Parent Registration</title>
+</head>
+<body>
+    <h1>Parent Registration Form</h1>
+    <form id="parentForm">
+        <label>Parent ID (Auto):</label><input type="text" id="parentId" readonly><br>
+        <label>Name:</label><input type="text" id="name" required><br>
+        <label>Contact:</label><input type="text" id="contact" required><br>
+        <label>Email:</label><input type="email" id="email" required><br>
+        <label>Child ID (Student ID):</label><input type="text" id="childId" required><br>
+        <label>Relationship:</label>
+        <select id="relationship">
+            <option value="FATHER">Father</option>
+            <option value="MOTHER">Mother</option>
+        </select><br>
+        <label>Access Pin (Auto):</label><input type="text" id="accessPin" readonly><br>
+        <label>Status:</label>
+        <select id="status">
+            <option value="ACTIVE">Active</option>
+            <option value="DISABLED">Disabled</option>
+        </select><br>
+        <label>Role:</label><input type="text" id="role" value="Parent" readonly><br>
+
+        <button type="submit">Register Parent</button>
+    </form>
+
+    <script>
+        document.getElementById('parentForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('name').value,
+                contact: document.getElementById('contact').value,
+                email: document.getElementById('email').value,
+                childId: document.getElementById('childId').value,
+                relationship: document.getElementById('relationship').value,
+                status: document.getElementById('status').value,
+                role: document.getElementById('role').value
+            };
+            try {
+                const response = await fetch('/api/parents', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    const result = await response.json();
+                    alert('Parent registered successfully!');
+                    document.getElementById('parentId').value = result.parentId;
+                    document.getElementById('accessPin').value = result.accessPin;
+                } else {
+                    alert('Error: ' + response.statusText);
+                }
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        });
+    </script>
+</body>
+</html>
