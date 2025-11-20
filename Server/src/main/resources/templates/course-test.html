@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Course API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .error { color: red; }
+        .success { color: green; }
+        li { margin-bottom: 8px; }
+        input { margin-right: 4px; }
+    </style>
+</head>
+<body>
+    <h1>Course API Test</h1>
+    <div>
+        <h2>Create Course</h2>
+        <input id="courseName" placeholder="Course Name" maxlength="100">
+        <input id="courseDescription" placeholder="Description" maxlength="255">
+        <button onclick="createCourse()">Create</button>
+    </div>
+    <div>
+        <h2>All Courses</h2>
+        <button onclick="getAllCourses()">Refresh</button>
+        <ul id="courseList"></ul>
+    </div>
+    <div id="feedback"></div>
+    <script>
+        function escapeHtml(text) {
+            return text.replace(/[&<>"']/g, function(m) {
+                return ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                })[m];
+            });
+        }
+
+        function createCourse() {
+            const name = document.getElementById('courseName').value.trim();
+            const description = document.getElementById('courseDescription').value.trim();
+            if (!name) {
+                showFeedback('Course name is required.', false);
+                return;
+            }
+            fetch('/api/courses', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: name, description: description})
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(err => { throw err; });
+                return res.json();
+            })
+            .then(data => {
+                showFeedback('Created: ' + JSON.stringify(data), true);
+                document.getElementById('courseName').value = '';
+                document.getElementById('courseDescription').value = '';
+                getAllCourses();
+            })
+            .catch(err => showFeedback('Error creating course: ' + (err.message || JSON.stringify(err)), false));
+        }
+
+        function getAllCourses() {
+            fetch('/api/courses')
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById('courseList');
+                    list.innerHTML = '';
+                    data.forEach(c => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <b>ID:</b> ${c.id}, 
+                            <b>Name:</b> <span id="name-${c.id}">${escapeHtml(c.name)}</span>
+                            <b>Description:</b> <span id="desc-${c.id}">${escapeHtml(c.description || '')}</span>
+                            <button onclick="showUpdateForm(${c.id}, '${escapeHtml(c.name)}', '${escapeHtml(c.description || '')}')">Edit</button>
+                            <button onclick="deleteCourse(${c.id})">Delete</button>
+                        `;
+                        list.appendChild(li);
+                    });
+                })
+                .catch(() => showFeedback('Error loading courses', false));
+        }
+
+        function showUpdateForm(id, name, description) {
+            const li = document.getElementById(`name-${id}`).parentElement;
+            li.innerHTML = `
+                <b>ID:</b> ${id},
+                <input id="editName-${id}" value="${name}" maxlength="100" placeholder="Course Name">
+                <input id="editDesc-${id}" value="${description}" maxlength="255" placeholder="Description">
+                <button onclick="updateCourse(${id})">Save</button>
+                <button onclick="getAllCourses()">Cancel</button>
+            `;
+        }
+
+        function updateCourse(id) {
+            const name = document.getElementById(`editName-${id}`).value.trim();
+            const description = document.getElementById(`editDesc-${id}`).value.trim();
+            if (!name) {
+                showFeedback('Course name is required.', false);
+                return;
+            }
+            fetch('/api/courses/' + id, {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id, name: name, description: description})
+            })
+            .then(res => {
+                if (!res.ok) return res.json().then(err => { throw err; });
+                return res.json();
+            })
+            .then(data => {
+                showFeedback('Updated: ' + JSON.stringify(data), true);
+                getAllCourses();
+            })
+            .catch(err => showFeedback('Error updating course: ' + (err.message || JSON.stringify(err)), false));
+        }
+
+        function deleteCourse(id) {
+            if (!confirm('Are you sure you want to delete this course?')) return;
+            fetch('/api/courses/' + id, { method: 'DELETE' })
+            .then(res => {
+                if (!res.ok) throw new Error('Delete failed');
+                showFeedback('Deleted course ' + id, true);
+                getAllCourses();
+            })
+            .catch(err => showFeedback('Error deleting course', false));
+        }
+
+        function showFeedback(msg, success) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = msg;
+            feedback.className = success ? 'success' : 'error';
+            setTimeout(() => { feedback.textContent = ''; }, 4000);
+        }
+
+        // Initial load
+        getAllCourses();
+    </script>
+</body>
+</html>
